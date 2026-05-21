@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ahmad Zhafar — Video Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #1a1a1a;
+    --accent: #c8f461;
+    --accent2: #a8d430;
+    --text: #f0ede6;
+    --muted: #888880;
+    --border: rgba(255,255,255,0.08);
+    --card: #141414;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-follow {
+    width: 36px; height: 36px;
+    border: 1.5px solid rgba(200,244,97,0.5);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9998;
+    transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  a:hover ~ .cursor, button:hover ~ .cursor { transform: scale(2.5); }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.5;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    padding: 1.5rem 3rem;
+    display: flex; justify-content: space-between; align-items: center;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    background: rgba(10,10,10,0.7);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.875rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+    font-weight: 400;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent);
+    color: #0a0a0a;
+    padding: 0.6rem 1.4rem;
+    border-radius: 100px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: transform 0.2s, background 0.2s;
+    cursor: none;
+  }
+  .nav-cta:hover { background: var(--accent2); transform: scale(1.03); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center;
+    padding: 8rem 3rem 5rem;
+    position: relative;
+    overflow: hidden;
+    background-image: url('foto 1.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 0;
+  }
+  .hero-bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .hero-bg-circle.c1 {
+    width: 500px; height: 500px;
+    background: rgba(200,244,97,0.07);
+    top: -100px; right: -100px;
+    animation: float1 8s ease-in-out infinite;
+  }
+  .hero-bg-circle.c2 {
+    width: 400px; height: 400px;
+    background: rgba(200,244,97,0.04);
+    bottom: 50px; left: -150px;
+    animation: float2 10s ease-in-out infinite;
+  }
+  @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-30px)} }
+  @keyframes float2 { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(20px) translateX(15px)} }
+
+  .hero-content { max-width: 900px; position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(200,244,97,0.1);
+    border: 1px solid rgba(200,244,97,0.2);
+    color: var(--accent);
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--text);
+  }
+  .hero h1 .accent { color: var(--accent); }
+
+  .hero-desc {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 3rem;
+    font-weight: 300;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-actions {
+    display: flex; gap: 1rem; align-items: center;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent);
+    color: #0a0a0a;
+    padding: 0.9rem 2rem;
+    border-radius: 100px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: none;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(200,244,97,0.3); }
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--muted);
+    padding: 0.9rem 1.5rem;
+    border-radius: 100px;
+    font-size: 0.95rem;
+    font-weight: 400;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: color 0.2s, border-color 0.2s;
+    cursor: none;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  .hero-scroll {
+    position: absolute; bottom: 3rem; left: 3rem;
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 0.8rem; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    animation: fadeUp 0.6s 0.5s ease both;
+  }
+  .scroll-line {
+    width: 40px; height: 1px;
+    background: var(--muted);
+    position: relative; overflow: hidden;
+  }
+  .scroll-line::after {
+    content: '';
+    position: absolute; top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: var(--accent);
+    animation: lineAnim 2s ease infinite;
+  }
+  @keyframes lineAnim { 0%{left:-100%} 100%{left:100%} }
+
+  .hero-stats {
+    position: absolute; right: 3rem; bottom: 3rem;
+    display: flex; gap: 3rem;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .stat-item { text-align: right; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem; font-weight: 700;
+    color: var(--text); letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .stat-num span { color: var(--accent); }
+  .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; letter-spacing: 0.04em; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+  /* MARQUEE */
+  .marquee-section {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 1.2rem 0;
+    overflow: hidden;
+    background: var(--bg2);
+  }
+  .marquee-track {
+    display: flex; gap: 4rem;
+    animation: marquee 20s linear infinite;
+    white-space: nowrap;
+  }
+  .marquee-item {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 0.8rem; letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted); flex-shrink: 0;
+  }
+  .marquee-dot { width: 4px; height: 4px; background: var(--accent); border-radius: 50%; }
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* SECTION COMMON */
+  section { padding: 7rem 3rem; }
+  .section-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.75rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 1.5rem; font-weight: 500;
+  }
+  .section-label::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: var(--accent);
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.1; margin-bottom: 1.5rem;
+  }
+  .section-title em { font-style: normal; color: var(--accent); }
+
+  /* WORK */
+  #work { background: var(--bg); }
+  .work-header {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 4rem;
+  }
+  .work-header-text { max-width: 480px; }
+  .work-subtitle { color: var(--muted); font-size: 1rem; font-weight: 300; }
+  .view-all {
+    color: var(--muted); font-size: 0.875rem; text-decoration: none;
+    border-bottom: 1px solid var(--border); padding-bottom: 2px;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap; align-self: flex-end;
+  }
+  .view-all:hover { color: var(--text); border-color: var(--muted); }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    border-radius: 16px;
+  }
+  .project-card {
+    background: var(--card);
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    transition: background 0.3s;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  .project-card:first-child { border-radius: 16px 16px 0 0; }
+  .project-card:last-child { border-radius: 0 0 16px 16px; }
+
+  .project-card:hover { background: #1c1c1c; }
+  .project-card-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  .project-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.1em;
+  }
+  .project-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    font-size: 0.7rem; padding: 3px 10px;
+    border-radius: 100px;
+    background: rgba(255,255,255,0.05);
+    color: var(--muted); letter-spacing: 0.04em;
+    border: 1px solid var(--border);
+  }
+  .project-img {
+    width: 100%; height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+    position: relative;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .project-card:hover .project-img { transform: scale(1.02); }
+  .project-img-gradient {
+    position: absolute; inset: 0;
+    opacity: 0.6;
+  }
+  .project-content { padding: 1rem 0; }
+  .project-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem; font-weight: 700;
+    letter-spacing: -0.02em; margin-bottom: 0.5rem;
+  }
+  .project-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.6; font-weight: 300; }
+  .project-link {
+    position: absolute; bottom: 2.5rem; right: 2.5rem;
+    width: 42px; height: 42px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); text-decoration: none; font-size: 1rem;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .project-link:hover { background: var(--accent); color: #0a0a0a; border-color: var(--accent); }
+
+  .project-card.featured {
+    grid-column: unset;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    border-radius: 16px 16px 0 0;
+  }
+  .project-card.featured .project-img { height: 300px; }
+  .project-card.featured .project-title { font-size: 1.8rem; }
+  .project-card.featured .project-content { padding: 1rem 0; }
+
+  /* ABOUT */
+  #about { background: var(--bg2); }
+  .about-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5rem; align-items: center;
+  }
+  .about-img-wrapper {
+    position: relative;
+  }
+  .about-img {
+    width: 100%; aspect-ratio: 3/4;
+    background: var(--bg3);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 5rem;
+    position: relative; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .about-img-accent {
+    position: absolute; bottom: -20px; right: -20px;
+    width: 140px; height: 140px;
+    background: var(--accent);
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.2;
+  }
+  .about-img-card {
+    position: absolute; bottom: 2rem; left: -2rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    backdrop-filter: blur(10px);
+  }
+  .about-img-card-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem; font-weight: 800;
+    color: var(--accent); line-height: 1;
+  }
+  .about-img-card-label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+  .about-desc { color: var(--muted); line-height: 1.8; font-weight: 300; margin-bottom: 2rem; }
+  .skills-list {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 2rem;
+  }
+  .skill-chip {
+    padding: 6px 14px; border-radius: 100px;
+    background: rgba(200,244,97,0.06);
+    border: 1px solid rgba(200,244,97,0.15);
+    color: var(--accent); font-size: 0.8rem; font-weight: 500;
+  }
+
+  /* SERVICES */
+  #services { background: var(--bg); }
+  .services-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    margin-top: 4rem;
+  }
+  .service-card {
+    background: var(--card);
+    padding: 2.5rem;
+    transition: background 0.3s;
+    cursor: none;
+    position: relative; overflow: hidden;
+  }
+  .service-card:hover { background: #1c1c1c; }
+  .service-card:first-child { border-radius: 16px 0 0 16px; }
+  .service-card:last-child { border-radius: 0 16px 16px 0; }
+  .service-icon {
+    width: 50px; height: 50px;
+    background: rgba(200,244,97,0.1);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin-bottom: 1.5rem;
+    border: 1px solid rgba(200,244,97,0.15);
+  }
+  .service-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem; font-weight: 700;
+    letter-spacing: -0.01em; margin-bottom: 0.75rem;
+  }
+  .service-desc { color: var(--muted); font-size: 0.9rem; line-height: 1.7; font-weight: 300; }
+  .service-num {
+    position: absolute; top: 2rem; right: 2rem;
+    font-family: 'Syne', sans-serif; font-size: 0.7rem;
+    font-weight: 700; color: rgba(200,244,97,0.2);
+    letter-spacing: 0.1em;
+  }
+
+  /* TESTIMONIALS */
+  #testimonials { background: var(--bg2); }
+  .testi-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem; margin-top: 4rem;
+  }
+  .testi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 2rem;
+  }
+  .testi-stars { color: var(--accent); font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 1rem; }
+  .testi-text { color: var(--muted); font-size: 0.9rem; line-height: 1.7; font-weight: 300; margin-bottom: 1.5rem; }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 600;
+    background: rgba(200,244,97,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(200,244,97,0.2);
+  }
+  .testi-name { font-size: 0.875rem; font-weight: 500; }
+  .testi-role { font-size: 0.75rem; color: var(--muted); }
+
+  /* CTA */
+  #contact {
+    background: var(--bg);
+    text-align: center;
+    padding: 8rem 3rem;
+  }
+  .cta-box {
+    max-width: 700px; margin: 0 auto;
+    position: relative;
+  }
+  .cta-glow {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px; height: 400px;
+    background: rgba(200,244,97,0.05);
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+  .cta-box h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800; letter-spacing: -0.03em;
+    line-height: 1.05; margin-bottom: 1.5rem;
+  }
+  .cta-box h2 em { font-style: normal; color: var(--accent); }
+  .cta-sub { color: var(--muted); margin-bottom: 3rem; font-size: 1rem; font-weight: 300; }
+  .cta-email {
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 1rem 2.5rem;
+    background: var(--accent);
+    color: #0a0a0a;
+    border-radius: 100px;
+    font-size: 1rem; font-weight: 500;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: none;
+  }
+  .cta-email:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(200,244,97,0.35); }
+  .social-links {
+    display: flex; gap: 1rem; justify-content: center; margin-top: 2.5rem;
+  }
+  .social-link {
+    width: 44px; height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted); text-decoration: none; font-size: 1rem;
+    transition: all 0.2s;
+    cursor: none;
+  }
+  .social-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(200,244,97,0.06);
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 3rem;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg2);
+    font-size: 0.8rem; color: var(--muted);
+  }
+  footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  footer a:hover { color: var(--text); }
+
+  /* SCROLL REVEAL */
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+    padding: 2rem;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    width: 100%; max-width: 700px;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: translateY(30px) scale(0.97);
+    transition: transform 0.3s ease;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-header {
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: flex-start;
+    position: sticky; top: 0;
+    background: #141414;
+    border-radius: 20px 20px 0 0;
+    z-index: 1;
+  }
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem; font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .modal-subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+  .modal-close {
+    width: 36px; height: 36px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--muted); font-size: 1.1rem;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .modal-close:hover { background: var(--accent); color: #0a0a0a; border-color: var(--accent); }
+  .modal-body { padding: 1.5rem 2rem 2rem; }
+  .modal-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  .modal-post {
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    display: block;
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: pointer;
+  }
+  .modal-post:hover { transform: translateY(-3px); border-color: rgba(200,244,97,0.3); }
+  .modal-post-cover {
+    width: 100%; aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    background: var(--bg3);
+  }
+  .modal-post-cover-placeholder {
+    width: 100%; aspect-ratio: 1;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem;
+  }
+  .modal-post-info {
+    padding: 0.75rem 1rem;
+    background: var(--card);
+  }
+  .modal-post-title {
+    font-size: 0.85rem; font-weight: 500;
+    color: var(--text); margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .modal-post-link {
+    font-size: 0.75rem; color: var(--accent);
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    nav { padding: 1.25rem 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 5rem 1.5rem; }
+    .hero { padding: 7rem 1.5rem 4rem; }
+    .projects-grid, .about-grid, .services-grid, .testi-grid { grid-template-columns: 1fr; }
+    .project-card.featured { grid-template-columns: 1fr; }
+    .hero-stats { position: static; display: flex; gap: 2rem; margin-top: 3rem; justify-content: flex-start; }
+    .hero-scroll { display: none; }
+    .work-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+    .about-img-card { left: 1rem; }
+    .service-card:first-child, .service-card:last-child { border-radius: 0; }
+    .services-grid { border-radius: 12px; }
+    .projects-grid { gap: 1px; border-radius: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-follow" id="cursor-follow"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">AZ<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#work">Karya</a></li>
+    <li><a href="#about">Tentang</a></li>
+    <li><a href="#services">Layanan</a></li>
+    <li><a href="#testimonials">Testimoni</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Hubungi →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-circle c1"></div>
+  <div class="hero-bg-circle c2"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Nganggur</div>
+    <h1>
+      Ahmad<br>
+      Zhafar<br>
+      <span class="accent">Portofolio</span>
+    </h1>
+    <p class="hero-desc">
+      Vidio editor yang berfokus pada pembuatan konten media sosial, motion graphics, dan video promosi dengan pengalaman baru 5 bulan hehe.
+    </p>
+    <div class="hero-actions">
+      <a href="#work" class="btn-primary">my work guweh tuh ↓</a>
+      <a href="#contact" class="btn-ghost">Mari Bicara</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    Scroll
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">42<span>+</span></div>
+      <div class="stat-label">Proyek Selesai</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">5<span>yr</span></div>
+      <div class="stat-label">Pengalaman</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">98<span>%</span></div>
+      <div class="stat-label">Klien Puas</div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <div class="marquee-item"><div class="marquee-dot"></div>Motion Graphics</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Design Graphic</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Logo Animation</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>short video</div>
+   <div class="marquee-item"><div class="marquee-dot"></div>Motion Graphics</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Design Graphic</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Logo Animation</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>short video</div>
+    <!-- duplicate for infinite scroll -->
+    <div class="marquee-item"><div class="marquee-dot"></div>Motion Graphics</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Design Graphic</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Logo Animation</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>short video</div>
+   <div class="marquee-item"><div class="marquee-dot"></div>Motion Graphics</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Design Graphic</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>Logo Animation</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>short video</div>
+  </div>
+</div>
+
+<!-- WORK -->
+<section id="work">
+  <div class="work-header reveal">
+    <div class="work-header-text">
+      <div class="section-label">Karya Pilihan</div>
+      <h2 class="section-title">Proyek yang <em>Membuat mamah Bangga</em></h2>
+      <p class="work-subtitle">Koleksi karya terbaik dari berbagai industri dan klien.</p>
+    </div>
+    <a href="#" class="view-all">Lihat Semua Proyek →</a>
+  </div>
+
+  <div class="projects-grid">
+    <!-- Featured -->
+    <div class="project-card featured reveal" onclick="openModal('motion')" style="cursor:pointer;">
+      <div class="project-img" style="background: linear-gradient(135deg, #1a1a2e, #0d1117);">
+        <div class="project-img-gradient" style="background: linear-gradient(135deg, rgba(200,244,97,0.15), transparent);"></div>
+       <img src="preview motion graphics.gif" style="width:100%; height:100%; object-fit:cover; position:absolute; inset:0;">
+      </div>
+      <div class="project-content">
+        <div class="project-card-top">
+          <span class="project-num">01 </span>
+          <div class="project-tags"><span class="tag">Suzuki Indonesia</span><span class="tag">Promag</span><span class="tag">Berani Berencana</span></div>
+        </div>
+        <h3 class="project-title">Motion Graphics </h3>
+        <p class="project-desc">motion graphics untuk beberapa brand Indonesia.</p>
+        <br>
+        <span style="color: var(--accent); font-size: 0.875rem; font-weight: 500;">Lihat Postingan →</span>
+      </div>
+      <div class="project-link">↗</div>
+    </div>
+
+    <div class="project-card reveal reveal-delay-1" onclick="openModal('design')" style="cursor:pointer;">
+      <div class="project-img" style="background: linear-gradient(135deg, #0d1b2a, #1b263b);">
+        <div class="project-img-gradient" style="background: linear-gradient(135deg, rgba(55,138,221,0.2), transparent);"></div>
+        <span style="font-size:3rem; z-index:1;">📊</span>
+      </div>
+      <div class="project-content">
+        <div class="project-card-top">
+          <span class="project-num">02</span>
+          <div class="project-tags"><span class="tag">SaaS</span><span class="tag">Dashboard</span></div>
+        </div>
+        <h3 class="project-title">Short Video tiktok & reels</h3>
+        <p class="project-desc">Dashboard analitik keuangan real-time dengan visualisasi data kompleks.</p>
+        <br>
+        <span style="color: var(--accent); font-size: 0.875rem; font-weight: 500;">Lihat Postingan →</span>
+      </div>
+      <div class="project-link">↗</div>
+    </div>
+
+    <div class="project-card reveal reveal-delay-2" onclick="openModal('text3d')" style="cursor:pointer;">
+      <div class="project-img" style="background: linear-gradient(135deg, #0d2818, #1a3a2a);">
+        <div class="project-img-gradient" style="background: linear-gradient(135deg, rgba(97,200,130,0.2), transparent);"></div>
+        <img src="3d text preview.gif" style="width:100%; height:100%; object-fit:cover; position:absolute; inset:0;">
+      </div>
+      <div class="project-content">
+        <div class="project-card-top">
+          <span class="project-num">03</span>
+          <div class="project-tags"><span class="tag">Logo</span><span class="tag">Text</span></div>
+        </div>
+        <h3 class="project-title">3D Text Animation</h3>
+        <p class="project-desc">Animasi teks 3D untuk kebutuhan highlight video game .</p>
+        <br>
+        <span style="color: var(--accent); font-size: 0.875rem; font-weight: 500;">Lihat Postingan →</span>
+      </div>
+      <div class="project-link">↗</div>
+    </div>
+
+    <div class="project-card reveal reveal-delay-3" onclick="openModal('logo')" style="cursor:pointer;">
+      <div class="project-img" style="background: linear-gradient(135deg, #1a0d2e, #2e1a0d);">
+        <div class="project-img-gradient" style="background: linear-gradient(135deg, rgba(200,150,97,0.2), transparent);"></div>
+        <img src="logo anim.gif" style="width:100%; height:100%; object-fit:cover; position:absolute; inset:0;">
+      </div>
+      <div class="project-content">
+        <div class="project-card-top">
+          <span class="project-num">04</span>
+          <div class="project-tags"><span class="tag">Logo</span><span class="tag">Animation</span></div>
+        </div>
+        <h3 class="project-title">Logo Animation</h3>
+        <p class="project-desc">Animasi logo untuk berbagai brand dan kebutuhan identitas visual.</p>
+        <br>
+        <span style="color: var(--accent); font-size: 0.875rem; font-weight: 500;">Lihat Postingan →</span>
+      </div>
+      <div class="project-link">↗</div>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title"></div>
+        <div class="modal-subtitle" id="modal-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid" id="modal-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-img-wrapper reveal">
+      <div class="about-img">
+        <div class="about-img-accent"></div>
+        <img src="foto atmin.jpeg" style="width:100%; height:100%; object-fit:cover; position:absolute; inset:0;">
+      </div>
+      <div class="about-img-card">
+        <div class="about-img-card-num">5+</div>
+        <div class="about-img-card-label">Tahun Pengalaman</div>
+      </div>
+    </div>
+    <div class="reveal reveal-delay-1">
+      <div class="section-label">Tentang Saya</div>
+      <h2 class="section-title">Halo, saya <em>Ahmad</em> 👋</h2>
+      <p class="about-desc">
+        Saya adalah seorang video editor dan graphic designer asal Payakumbuh, Sumatra Barat 
+      </p>
+      <p class="about-desc">
+        Dengan pengalaman lebih dari 5 bulan, saya telah membantu beberapa brand Indonesia dalam menciptakan konten visual yang menarik dan efektif untuk media sosial, promosi, dan branding. 
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div style="text-align: center; margin-bottom: 0;" class="reveal">
+    <div class="section-label" style="justify-content: center;">Layanan</div>
+    <h2 class="section-title">Experience<em>
+  </div>
+  <div class="services-grid">
+    <div class="service-card reveal">
+      <span class="service-num">01</span>
+      <div class="service-icon">🎬</div>
+      <h3 class="service-title">Video editor Agency</h3>
+      <p class="service-desc">Internship sebagai video editor di Circa Ideaworks</p>
+    </div>
+    <div class="service-card reveal reveal-delay-1">
+      <span class="service-num">02</span>
+      <div class="service-icon">⚡</div>
+      <h3 class="service-title">Freelance Video editor</h3>
+      <p class="service-desc">Freelance video editor.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="contact">
+  <div class="cta-box reveal">
+    <div class="cta-glow"></div>
+    <div class="section-label" style="justify-content: center; margin-bottom: 1.5rem;">Kontak</div>
+    <h2>Punya Proyek <em>Seru?</em><br>Mari Berkolaborasi</h2>
+    <p class="cta-sub">Saya terbuka untuk proyek freelance, kolaborasi, atau sekadar ngobrol tentang desain dan teknologi.</p>
+    <a href="mailto:hello@ahmdzhafar.com" class="cta-email">
+      ✉️ &nbsp;hello@ahmdzhafar.com
+    </a>
+    <div class="social-links">
+      <a href="https://wa.me/NOMORHPKAMU" target="_blank" class="social-link" title="WhatsApp" style="display:flex; align-items:center; gap:8px; border-radius:100px; padding: 0 1.25rem; width:auto;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </a>
+      <a href="https://instagram.com/ahmdzhafar._" target="_blank" class="social-link" title="Instagram" style="display:flex; align-items:center; gap:8px; border-radius:100px; padding: 0 1.25rem; width:auto;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+        Instagram
+      </a>
+      <a href="https://discord.com/loky/3020" target="_blank" class="social-link" title="Discord" style="display:flex; align-items:center; gap:8px; border-radius:100px; padding: 0 1.25rem; width:auto;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+        Discord
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span>© 2025 Ahmad Zhafar — Payakumbuh, Indonesia</span>
+  <span>Designed & built with💡</span>
+  <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'})">Kembali ke Atas ↑</a>
+</footer>
+
+<script>
+// =============================================
+// DATA PROYEK — EDIT BAGIAN INI
+// Untuk tiap proyek, isi posts dengan:
+//   title : judul postingan
+//   cover : nama file gambar cover (taruh di folder sama dengan portfolio.html)
+//           contoh: 'cover1.jpg' atau link URL Instagram
+//   link  : link postingan Instagram
+// =============================================
+const projects = {
+  motion: {
+    title: 'Motion Graphics',
+    subtitle: 'Klik gambar untuk lihat postingan',
+    posts: [
+      {
+        title: 'Suzuki Indonesia',
+        cover: '', // ganti dengan nama file gambar, contoh: 'suzuki-cover.jpg'
+        link: 'https://www.instagram.com/reel/DXGi2lyjmYc/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA=='
+      },
+      {
+        title: 'Suzuki Indonesia',
+        cover: '',
+        link: 'https://www.instagram.com/reel/DWlbQTPEsQj/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA=='
+      },
+      {
+        title: 'Suzuki Indonesia',
+        cover: '',
+        link: 'https://www.instagram.com/reel/DWGHXGqCYD4/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA=='
+      },
+      {
+        title: 'Suzuki Indonesia',
+        cover: '', // ganti dengan nama file gambar, contoh: 'suzuki-cover.jpg'
+        link: 'https://www.instagram.com/reel/DT2oHjrEsMJ/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA=='
+      },
+      {
+        title: 'Berani Berencana',
+        cover: '', // ganti dengan nama file gambar, contoh: 'suzuki-cover.jpg'
+        link: 'https://www.instagram.com/reel/DUp8rVdE98F/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA=='
+      },
+      {
+        title: 'Berani Berencana',
+        cover: '', // ganti dengan nama file gambar, contoh: 'suzuki-cover.jpg'
+        link: 'https://www.instagram.com/reel/DW3hoG3k8_g/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA=='
+      },
+      {
+        title: 'Suzuki Indonesia',
+        cover: '', // ganti dengan nama file gambar, contoh: 'suzuki-cover.jpg'
+        link: 'https://x.com/SuzukiIndonesia/status/2032479820622541188?s=20'
+      },
+      
+    ]
+  },
+  design: {
+    title: 'Design Graphic',
+    subtitle: 'Klik gambar untuk lihat postingan Instagram',
+    posts: [
+      {
+        title: 'Desain 1',
+        cover: '',
+        link: 'https://www.instagram.com/p/LINK_POST_4/'
+      },
+      {
+        title: 'Desain 2',
+        cover: '',
+        link: 'https://www.instagram.com/p/LINK_POST_5/'
+      }
+    ]
+  },
+  text3d: {
+    title: '3D Text Animation',
+    subtitle: 'Klik gambar untuk lihat postingan Instagram',
+    posts: [
+      {
+        title: 'Animasi 3D Text',
+        cover: '',
+        link: 'https://drive.google.com/drive/folders/1fZRid3yyXb0OxGrQWF65liygen0uhMhc?usp=sharing'
+      },
+      {
+        title: 'Game Highlight',
+        cover: '',
+        link: 'https://www.instagram.com/p/LINK_POST_7/'
+      }
+    ]
+  },
+  logo: {
+    title: 'Logo Animation',
+    subtitle: 'Klik gambar untuk lihat postingan Instagram',
+    posts: [
+      {
+        title: 'Logo Animasi 1',
+        cover: '', // ganti dengan nama file gambar cover
+        link: 'https://www.instagram.com/p/LINK_POST_8/'
+      },
+      {
+        title: 'Logo Animasi 2',
+        cover: '',
+        link: 'https://www.instagram.com/p/LINK_POST_9/'
+      }
+    ]
+  }
+};
+
+function openModal(projectId) {
+  const project = projects[projectId];
+  if (!project) return;
+  document.getElementById('modal-title').textContent = project.title;
+  document.getElementById('modal-subtitle').textContent = project.subtitle;
+  const grid = document.getElementById('modal-grid');
+  grid.innerHTML = project.posts.map(post => `
+    <a href="${post.link}" target="_blank" class="modal-post">
+      ${post.cover
+        ? `<img src="${post.cover}" alt="${post.title}" class="modal-post-cover">`
+        : `<div class="modal-post-cover-placeholder">📸</div>`
+      }
+      <div class="modal-post-info">
+        <div class="modal-post-title">${post.title}</div>
+        <div class="modal-post-link">lihat postingan ↗</div>
+      </div>
+    </a>
+  `).join('');
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+
+<script>
+const cursor = document.getElementById('cursor');
+const follow = document.getElementById('cursor-follow');
+let mx = 0, my = 0, fx = 0, fy = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx - 5 + 'px';
+  cursor.style.top = my - 5 + 'px';
+});
+
+(function animFollow() {
+  fx += (mx - fx) * 0.12;
+  fy += (my - fy) * 0.12;
+  follow.style.left = fx - 18 + 'px';
+  follow.style.top = fy - 18 + 'px';
+  requestAnimationFrame(animFollow);
+})();
+
+document.querySelectorAll('a, button, .project-card, .service-card').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.transform = 'scale(2)';
+    follow.style.transform = 'scale(1.5)';
+    follow.style.borderColor = 'rgba(200,244,97,0.8)';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.transform = 'scale(1)';
+    follow.style.transform = 'scale(1)';
+    follow.style.borderColor = 'rgba(200,244,97,0.5)';
+  });
+});
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
